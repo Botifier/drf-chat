@@ -22,7 +22,8 @@ class BaseViewTest(APITestCase):
         self._create_test_users()
         self._create_test_conversation()
         self.conversation = Conversation.objects.get()
-        self._create_test_message()
+        self._create_test_message()  
+        self._get_jwt_token()      
 
     def _create_test_message(self):
         self.message = Message.objects.create(
@@ -41,17 +42,24 @@ class BaseViewTest(APITestCase):
         self.user1 = User.objects.create_user(self.username1, self.email1, self.password)
         self.user2 = User.objects.create_user(self.username2, self.email2, self.password)
 
+    def _get_jwt_token(self):
+        url = reverse('api-token-auth')
+        response = self.client.post(
+            url, 
+            {'username':self.username1, 'password':self.password},
+             format='json'
+            )        
+        self.jwt_token = response.data['token']
 
-    def login(self):
-        self.client.login(username=self.username1, password=self.password)
+    def jwt_auth(self):
+        self.client.credentials(HTTP_AUTHORIZATION='JWT ' + self.jwt_token)
 
     @classmethod
-    def login_before(cls, func):
+    def jwt_auth_before(cls, func):
         def wrapper(self):
-            self.login()
+            self.jwt_auth()
             func(self)
         return wrapper
-
 
 
 class ConversationListViewTest(BaseViewTest):
@@ -62,13 +70,13 @@ class ConversationListViewTest(BaseViewTest):
 
     def test_get_conversationlist_authorisation(self):
         response = self.client.get(self.url)
-        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
     
     def test_post_conversationlist_authorisation(self):
         response = self.client.post(self.url)
-        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
 
-    @BaseViewTest.login_before    
+    @BaseViewTest.jwt_auth_before    
     def test_get_conversationlist(self):
         response = self.client.get(self.url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -77,7 +85,7 @@ class ConversationListViewTest(BaseViewTest):
         serialized = ConversationSerializer(expected, many=True)
         self.assertEqual(response.data, serialized.data)
     
-    @BaseViewTest.login_before
+    @BaseViewTest.jwt_auth_before
     def test_post_conversationlist(self):
         response = self.client.post(self.url, {'with':'mouath1'})
         self.assertEqual(status.HTTP_201_CREATED, response.status_code)
@@ -97,13 +105,13 @@ class MessageListViewTest(BaseViewTest):
                             
     def test_get_messagelist_authorisation(self):
         response = self.client.get(self.url)
-        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
     
     def test_post_messagelist_authorisation(self):
         response = self.client.post(self.url)
-        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
 
-    @BaseViewTest.login_before    
+    @BaseViewTest.jwt_auth_before    
     def test_get_messagelist(self):
         response = self.client.get(self.url, {'conversation':self.conversation.uid})
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -112,7 +120,7 @@ class MessageListViewTest(BaseViewTest):
         serialized = MessageSerializer(expected, many=True)
         self.assertEqual(response.data, serialized.data)
 
-    @BaseViewTest.login_before
+    @BaseViewTest.jwt_auth_before
     def test_post_messagelist(self):
         #TODO: add test non existing message
         response = self.client.post(
@@ -144,9 +152,9 @@ class MessageDetailViewTest(BaseViewTest):
 
     def test_get_messagedetail_authorisation(self):
         response = self.client.get(self.url)
-        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
     
-    @BaseViewTest.login_before
+    @BaseViewTest.jwt_auth_before
     def test_get_messagedetail(self):
         response = self.client.get(self.url, {'msg_id':self.message.uid})
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -154,5 +162,54 @@ class MessageDetailViewTest(BaseViewTest):
         expected = Message.objects.get(uid=self.message.uid)
         serialized = MessageSerializer(expected)
         self.assertEqual(response.data, serialized.data)
+
+
+class JWTAuthTest(APITestCase):
+
+    def setUp(self):
+        self.username = 'mouath'
+        self.email = 'mouath@mouath.mouath'
+        self.password = 'pass1234'
+        self.create_url = reverse('api-token-auth')
+        self.verify_url = reverse('api-token-verify')
+        self._create_user()
+    
+    def _req_token(self):
+        response = self.client.post(
+            self.create_url, 
+            {'username':self.username, 'password':self.password},
+            format='json'
+        )        
+        return response
+    
+    def _verif_token(self, token):
+        response = self.client.post(
+            self.verify_url,
+            {'token': token}, 
+            format='json'
+        )
+        return response
+
+    def _create_user(self):
+        User.objects.create_user(
+            'mouath', 
+            'mouath@mouath.mouath',
+            'pass1234'
+        )
+
+    def test_token_valid(self):
+        response = self._req_token()
+        data = response.data
+        self.assertTrue('token' in data)
+        token = data['token']
+        self.assertEqual(
+            self._verif_token('UNVALID_TOKEN').status_code, 
+            status.HTTP_400_BAD_REQUEST
+        )
+        self.assertEqual(
+            self._verif_token(token).status_code,
+            status.HTTP_200_OK
+        )
+        
 
 
