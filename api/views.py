@@ -1,12 +1,18 @@
 from .models import Conversation, User, Message
-from .serializers import MessageSerializer, ConversationSerializer
+from .serializers import (
+    MessageSerializer, 
+    ConversationSerializer, 
+    # RegistrationSerializer
+)
 from django.http import Http404
+from django.shortcuts import render
+from django.utils.crypto import get_random_string
 from rest_framework.views import APIView
-# from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from django.contrib.auth import authenticate
+from rest_framework_jwt.settings import api_settings
 
-#TODO: seperate the views in different files under views/
 
 class ConversationList(APIView):
     
@@ -34,7 +40,8 @@ class MessageList(APIView):
 
     ''' Return message list'''
     def get(self, request):
-        messages = Message.objects.filter(conversation=Conversation.objects.get(uid=request.GET.get('conversation')))
+        conversation = Conversation.objects.get(uid=request.GET.get('conversation'))
+        messages = Message.objects.filter(conversation=conversation)
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
@@ -55,7 +62,6 @@ class MessageList(APIView):
 class MessageDetail(APIView):
 
     ''' Get message details from id '''
-    #TODO: make this function reusable by other classes
     def get_object(self, uid):
         try:
             return Message.objects.get(uid=uid)
@@ -66,6 +72,32 @@ class MessageDetail(APIView):
         message = self.get_object(request.GET.get('msg_id'))
         serializer = MessageSerializer(message)
         return Response(serializer.data)
+
+
+class Registration(APIView):
+    permission_classes = ()
+    #TODO: add when user is already registered case
+    
+    def create_user(self, username):                
+        password = get_random_string()
+        email = get_random_string() + '@co.co'                 
+        User.objects.create_user(username, email, password)
+        user = authenticate(username=username, password=password)
+        return user
+    
+    def get_token(self, user):
+        payload = api_settings.JWT_PAYLOAD_HANDLER(user)
+        token = api_settings.JWT_ENCODE_HANDLER(payload)
+        return token
+
+    def post(self, request):
+        token = self.get_token(self.create_user(request.data['username']))
+        return Response(token, status=status.HTTP_201_CREATED)
+
+
+
+
+
 
 
 

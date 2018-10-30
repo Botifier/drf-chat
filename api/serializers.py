@@ -20,6 +20,17 @@ class ConversationSerializer(serializers.ModelSerializer):
     #TODO: add highlight methodfield (getting message[:12])
 
 
+# class RegistrationSerializer(serializers.ModelSerializer):
+#     def create(self, validated_data):
+#         return User.objects.create(**validated_data)
+
+#     class Meta:
+#         model = User
+#         fields = ('username', 'password', 'email')
+#         write_only_fields = ('password')
+
+
+
 
 
 

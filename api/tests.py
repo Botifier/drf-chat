@@ -212,4 +212,31 @@ class JWTAuthTest(APITestCase):
         )
         
 
+class RegisterTest(APITestCase):
+    
+    def setUp(self):
+        self.register_url = reverse('register')
+        self.verify_url = reverse('api-token-verify')
+        self.username = 'yoyo'
+    
+    def _verif_token(self, token):
+        response = self.client.post(
+            self.verify_url,
+            {'token': token}, 
+            format='json'
+        )
+        return response
+
+    def test_post_registration(self):
+        response = self.client.post(self.register_url, {'username': self.username})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        token = response.data
+        self.assertEqual(
+            self._verif_token(token).status_code,
+            status.HTTP_200_OK
+        )
+
+
+
+
 
