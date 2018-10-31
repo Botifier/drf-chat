@@ -1,8 +1,9 @@
 import json
 
 from django.core.urlresolvers import reverse
+from django.db import transaction, IntegrityError
 
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APITransactionTestCase
 from rest_framework.views import status
 
 from django.contrib.auth.models import User
@@ -212,7 +213,7 @@ class JWTAuthTest(APITestCase):
         )
         
 
-class RegisterTest(APITestCase):
+class RegisterTest(APITransactionTestCase):
     
     def setUp(self):
         self.register_url = reverse('register')
@@ -236,6 +237,10 @@ class RegisterTest(APITestCase):
             status.HTTP_200_OK
         )
 
+    def test_get_or_create(self):
+        self.client.post(self.register_url, {'username': self.username})               
+        response = self.client.post(self.register_url, {'username': self.username})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
 

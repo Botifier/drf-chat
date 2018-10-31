@@ -80,9 +80,11 @@ class Registration(APIView):
     
     def create_user(self, username):                
         password = get_random_string()
-        email = get_random_string() + '@co.co'                 
-        User.objects.create_user(username, email, password)
-        user = authenticate(username=username, password=password)
+        email = get_random_string() + '@co.co'  
+        try:               
+            user = User.objects.create_user(username, email, password)
+        except: #user already exists
+            user = User.objects.get(username=username)
         return user
     
     def get_token(self, user):
