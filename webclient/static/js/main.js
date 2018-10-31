@@ -6,6 +6,9 @@ var app = angular.module('chatapp', [
 app.constant('URLS', {
   'base': 'http://localhost:8000/api/',
   'register': 'register/',
+  'conversation_list': 'conversations/',
+  'message_list': 'messages/',
+  'message_detail': 'message/',
 })
 
 app.config(function($stateProvider, $urlRouterProvider, $authProvider){
@@ -57,6 +60,26 @@ app.service('AuthService', function($http, URLS){
 })
 
 app.service('ChatService', function($http, URLS){
+  let Chat = {};
+  const CLIST_URL = URLS.base + URLS.conversation_list
+  const MLIST_URL = URLS.base + URLS.message_list
+  const MDETAIL_URL = URLS.base + URLS.message_detail
+	Chat.getConversations = function(){
+		return $http.get(CLIST_URL);
+	};
+  Chat.getMessages = function(){
+		return $http.get(MLIST_URL);
+  };
+  Chat.getMessage = function(uid){
+		return $http.get(MDETAIL_URL, uid);
+  };  
+  Chat.addConversation = function(with_){
+    return $http.post(CLIST_URL, with_)
+  }
+  Chat.addMessage = function(details){ //details:{conversationId, messageText}
+    return $http.post(MLIST_URL, details)
+  }
+	return Chat;
 });
 
 app.run(function ($rootScope, $state, $auth) {
