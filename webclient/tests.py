@@ -16,6 +16,6 @@ class IndexTest(TestCase):
         request = HttpRequest()  
         response = index(request)  
         html = response.content.decode('utf8')  
-        self.assertTrue(html.startswith('<html>'))  
+        self.assertTrue(html.startswith('<!DOCTYPE html>'))  
         self.assertIn('<title>Chat demo app</title>', html)  
         self.assertTrue(html.endswith('</html>')) 

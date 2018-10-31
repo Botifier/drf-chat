@@ -4,6 +4,6 @@ from django.http import HttpResponse
 
 
 def index(request):
-	return HttpResponse('<html><title>Chat demo app</title></html>')
+	return render(request, 'index.html')
 
 
