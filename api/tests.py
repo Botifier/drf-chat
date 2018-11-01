@@ -8,7 +8,7 @@ from rest_framework.views import status
 
 from django.contrib.auth.models import User
 from .models import Conversation, Message
-from .serializers import MessageSerializer, ConversationSerializer, MessageListSerializer
+from .serializers import MessageSerializer, ConversationSerializer
 
 
 class BaseViewTest(APITestCase):
@@ -118,7 +118,7 @@ class MessageListViewTest(BaseViewTest):
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
         expected = Message.objects.all()
-        serialized = MessageListSerializer(expected, many=True)
+        serialized = MessageSerializer(expected, many=True)
         self.assertEqual(response.data, serialized.data)
 
     @BaseViewTest.jwt_auth_before

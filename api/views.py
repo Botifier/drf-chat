@@ -3,7 +3,6 @@ from .models import Conversation, User, Message
 from .serializers import (
     MessageSerializer, 
     ConversationSerializer, 
-    MessageListSerializer
 )
 from django.http import Http404
 from django.shortcuts import render
@@ -47,7 +46,7 @@ class MessageList(APIView):
         except Conversation.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         messages = Message.objects.filter(conversation=conversation)
-        serializer = MessageListSerializer(messages, many=True)
+        serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
     ''' Create new message '''

@@ -92,14 +92,7 @@ app.controller('ChatCtrl', function($scope, ChatService, UserData){
       function(res){
         if (res.status == 200){
           let messages = res.data
-          for (var i in messages){
-            ChatService.getMessage(messages[i].uid).then(
-              function(res){
-                $scope.messageList.push(res.data)
-              }
-            )
-            
-          }
+          $scope.messageList = messages
         }
       }
     )

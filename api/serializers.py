@@ -10,15 +10,6 @@ class MessageSerializer(serializers.ModelSerializer):
         # read_only_fields = ('created_at')
         extra_kwargs = {'conversation': {'write_only': True}}
 
-
-class MessageListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Message
-        fields = ('uid', 'conversation')
-        # read_only_fields = ('created_at')
-        extra_kwargs = {'conversation': {'write_only': True}}
-
-
 class ConversationSerializer(serializers.ModelSerializer):    
     participants = serializers.SlugRelatedField(many=True, slug_field='username', queryset=User.objects.all())
     
