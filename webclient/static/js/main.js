@@ -53,26 +53,36 @@ app.controller('ChatCtrl', function($scope, ChatService, UserData){
   var ws = new WebSocket("ws://" + window.location.host);
   ws.onmessage = function(e) {
     var data = JSON.parse(e.data);
-    if (!$scope.selectedConversation || data.conversation != $scope.selectedConversation) {
-      for (i in $scope.conversations){
-        if ($scope.conversations[i].uid==data.conversation){
-          $scope.conversations[i].hasNewMessages = true
-          //force view update for new message notification
-          $scope.$apply()
-          break
+    if (data.event == 'NEWMESSAGE'){
+      if (!$scope.selectedConversation || data.conversation != $scope.selectedConversation) {
+        for (i in $scope.conversations){
+          if ($scope.conversations[i].uid==data.conversation){
+            $scope.conversations[i].hasNewMessages = true
+            //force view update for new message notification
+            $scope.$apply()
+            break
+          }
         }
       }
-    }
 
-    else if (data.conversation == $scope.selectedConversation) {
-      ChatService.getMessage(data.message).then(
-        function(res){          
-          $scope.messageList.push(res.data)          
-        }
-      )
+      else if (data.conversation == $scope.selectedConversation) {
+        ChatService.getMessage(data.message).then(
+          function(res){          
+            $scope.messageList.push(res.data)          
+          }
+        )
+      }
     }
-  }
-
+    else if (data.event == 'NEWCONVERSATION'){
+      newConversation = {}
+      newConversation.hasNewMessages = false
+      newConversation.other = data.with
+      newConversation.uid = data.conversation
+      $scope.conversations.push(newConversation)
+      //force view update with new conversation
+      $scope.$apply()
+    }
+  } 
   $scope.username = UserData.getname()
   $scope.conversations = {}
   ChatService.getConversations().then(

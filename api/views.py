@@ -28,11 +28,20 @@ class ConversationList(APIView):
     '''
     def post(self, request):        
         #edit to just send usernames
-        participants = [request.user, User.objects.get(username=request.data['with'])]
+        user = User.objects.get(username=request.data['with'])
+        participants = [request.user, user]
         data = {'participants': participants}
         serializer = ConversationSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            conversation = serializer.save()
+            receiver_id = user.id
+            Group(str(receiver_id)).send({
+                'text': json.dumps({
+                    'event': 'NEWCONVERSATION',
+                    'conversation': str(conversation.uid),
+                    'with': str(request.user.username)
+                })
+            })
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
