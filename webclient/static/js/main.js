@@ -129,6 +129,26 @@ app.controller('ChatCtrl', function($scope, ChatService, UserData){
     })
   } 
 
+  $scope.createConversation = function(username){
+    ChatService.addConversation({'with':username}).then(
+      function(res){
+        if (res.status == 201){
+          newConversation = res.data
+          participants = newConversation.participants
+          var index = participants.indexOf($scope.username);
+          var other;
+          if (index > -1) {
+            participants.splice(index, 1);
+            other = participants[0]
+          }
+          newConversation.other = other
+          newConversation.hasNewMessages = false
+          $scope.conversations.push(newConversation)
+        }
+      }
+    )
+  }
+
 })
 
 app.service('UserData', function(){

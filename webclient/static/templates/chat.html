@@ -3,6 +3,15 @@
         <div class="row">
             <div class="card col-sm-4 " style="overflow:scroll;">
               <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                  <div class="col-xs-9">
+                      <input type="text" placeholder="Enter Friend's name.." class="form-control" ng-model="friend" size="50"/>
+                    </div>
+                    <div class="col-xs-3">
+                      <button class="btn btn-info btn-block" ng-click="createConversation(friend)">New Conversation</button>
+                    </div>
+                </li>
+                
                 <li class="list-group-item" ng-repeat="conversation in conversations">
                     <button class="btn btn-sm" ng-click="selectConversation(conversation.uid)">
                         <div  class="d-flex w-100 justify-content-between">
@@ -10,7 +19,7 @@
                         </div> 
                     </button>
                     <div ng-show="conversation.hasNewMessages"><h5 class="mb-1">new!!</h5></div>
-      
+                    
                 </li>                
               </ul>
             </div>
