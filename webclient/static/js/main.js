@@ -11,7 +11,7 @@ app.constant('URLS', {
   'message_detail': 'message/',
 })
 
-app.config(function($stateProvider, $urlRouterProvider, $authProvider){
+app.config(function($stateProvider, $urlRouterProvider, $authProvider, $httpProvider){
 	$stateProvider
 		.state('register', {
 			url: '/',
@@ -27,7 +27,9 @@ app.config(function($stateProvider, $urlRouterProvider, $authProvider){
 		});
 
   $urlRouterProvider.otherwise('/');
-  $authProvider.tokenType = 'JWT'
+  $authProvider.tokenType = 'JWT';
+  $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+  $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 });
 
 
@@ -48,7 +50,18 @@ app.controller('RegisterCtrl', function($scope, AuthService, $state, $auth, User
 
 // conversation = uid, participants, updated_at
 app.controller('ChatCtrl', function($scope, ChatService, UserData){
-  // ChatService.addConversation({'with': 'lam3i'}).then(    ()=>
+  var ws = new WebSocket("ws://" + window.location.host);
+  ws.onmessage = function(e) {
+    var data = JSON.parse(e.data);
+    if (data.conversation == $scope.selectedConversation) {
+      ChatService.getMessage(data.message).then(
+        function(res){          
+          $scope.messageList.push(res.data)          
+        }
+      )
+    }
+    
+  }
   $scope.username = UserData.getname()
   $scope.conversations = {}
   ChatService.getConversations().then(
@@ -80,10 +93,6 @@ app.controller('ChatCtrl', function($scope, ChatService, UserData){
         if (res.status == 200){
           let messages = res.data
           for (var i in messages){
-            if (i >= 10){
-              break
-            }
-            //fetch maximum 10 last messages
             ChatService.getMessage(messages[i].uid).then(
               function(res){
                 $scope.messageList.push(res.data)
@@ -96,10 +105,6 @@ app.controller('ChatCtrl', function($scope, ChatService, UserData){
     )
   }
 
-
-
-  
-
   $scope.sendMessage = function(msgText){
     ChatService.addMessage({
       'conversation': $scope.selectedConversation,
@@ -110,14 +115,7 @@ app.controller('ChatCtrl', function($scope, ChatService, UserData){
         $scope.message = ""
       }
     })
-  }
-
-  
-
-
-
-
-  // )
+  } 
 
 })
 
