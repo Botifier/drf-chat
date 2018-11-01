@@ -38,6 +38,9 @@
 
                 <table ng-repeat="msg in messageList" class="table">
                     <tr>
+                      <td>
+                        {{msg.sender_name || username}}: 
+                      </td>
                       <td>{{msg.text}}
                       </td>
                       <td>{{msg.created_at | date:'yyyy-MM-dd HH:mm'}}</td>

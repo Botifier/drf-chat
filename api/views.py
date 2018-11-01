@@ -78,6 +78,7 @@ class MessageList(APIView):
                     'event': 'NEWMESSAGE',
                     'conversation': str(conversation.uid),
                     'message': str(message.uid),
+                    'sender_name': str(request.user.username)
                 })
             })
             return Response(serializer.data, status=status.HTTP_201_CREATED)
