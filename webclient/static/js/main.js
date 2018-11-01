@@ -53,15 +53,26 @@ app.controller('ChatCtrl', function($scope, ChatService, UserData){
   var ws = new WebSocket("ws://" + window.location.host);
   ws.onmessage = function(e) {
     var data = JSON.parse(e.data);
-    if (data.conversation == $scope.selectedConversation) {
+    if (!$scope.selectedConversation || data.conversation != $scope.selectedConversation) {
+      for (i in $scope.conversations){
+        if ($scope.conversations[i].uid==data.conversation){
+          $scope.conversations[i].hasNewMessages = true
+          //force view update for new message notification
+          $scope.$apply()
+          break
+        }
+      }
+    }
+
+    else if (data.conversation == $scope.selectedConversation) {
       ChatService.getMessage(data.message).then(
         function(res){          
           $scope.messageList.push(res.data)          
         }
       )
     }
-    
   }
+
   $scope.username = UserData.getname()
   $scope.conversations = {}
   ChatService.getConversations().then(
@@ -77,6 +88,7 @@ app.controller('ChatCtrl', function($scope, ChatService, UserData){
             other = participants[0]
           }
           conversations[i].other = other
+          conversations[i].hasNewMessages = false
         }
         $scope.conversations = conversations
 
@@ -87,12 +99,19 @@ app.controller('ChatCtrl', function($scope, ChatService, UserData){
   //takes uid of conversation to highlight
   $scope.selectConversation = function(conversationUid){
     $scope.messageList = []
+    //set hasnew to false 
     $scope.selectedConversation = conversationUid
     ChatService.getMessages(conversationUid).then(
       function(res){
         if (res.status == 200){
           let messages = res.data
           $scope.messageList = messages
+          for (i in $scope.conversations){
+            if ($scope.conversations[i].uid == conversationUid){
+              $scope.conversations[i].hasNewMessages = false
+              break
+            }
+          }
         }
       }
     )
