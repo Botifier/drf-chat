@@ -31,14 +31,14 @@ app.config(function($stateProvider, $urlRouterProvider, $authProvider){
 });
 
 
-app.controller('RegisterCtrl', function($scope, AuthService, $state, $auth){
+app.controller('RegisterCtrl', function($scope, AuthService, $state, $auth, UserData){
   $scope.username = ''
   $scope.register = function(){
     AuthService.register($scope.username).then(
       function(res){        
         if (res.status == 201){
-          console.log($auth)
-          $auth.setToken(res.data);
+          $auth.setToken(res.data);  
+          UserData.setname($scope.username)
           $state.go('chat')
         }
       }
@@ -46,8 +46,90 @@ app.controller('RegisterCtrl', function($scope, AuthService, $state, $auth){
   }  
 })
 
-app.controller('ChatCtrl', function($scope, ChatService){
+// conversation = uid, participants, updated_at
+app.controller('ChatCtrl', function($scope, ChatService, UserData){
+  // ChatService.addConversation({'with': 'lam3i'}).then(    ()=>
+  $scope.username = UserData.getname()
+  $scope.conversations = {}
+  ChatService.getConversations().then(
+    function(res){
+      if (res.status == 200){
+        let conversations = res.data
+        for (i in conversations){
+          participants = conversations[i].participants
+          var index = participants.indexOf($scope.username);
+          var other;
+          if (index > -1) {
+            participants.splice(index, 1);
+            other = participants[0]
+          }
+          conversations[i].other = other
+        }
+        $scope.conversations = conversations
 
+      }
+    }
+  )
+
+  //takes uid of conversation to highlight
+  $scope.selectConversation = function(conversationUid){
+    $scope.messageList = []
+    $scope.selectedConversation = conversationUid
+    ChatService.getMessages(conversationUid).then(
+      function(res){
+        if (res.status == 200){
+          let messages = res.data
+          for (var i in messages){
+            if (i >= 10){
+              break
+            }
+            //fetch maximum 10 last messages
+            ChatService.getMessage(messages[i].uid).then(
+              function(res){
+                $scope.messageList.push(res.data)
+              }
+            )
+            
+          }
+        }
+      }
+    )
+  }
+
+
+
+  
+
+  $scope.sendMessage = function(msgText){
+    ChatService.addMessage({
+      'conversation': $scope.selectedConversation,
+      'text': msgText
+    }).then(function(res){
+      if (res.status == 201){
+        $scope.messageList.push({'text':msgText, 'created_at':Date.now()})
+        $scope.message = ""
+      }
+    })
+  }
+
+  
+
+
+
+
+  // )
+
+})
+
+app.service('UserData', function(){
+  var UserData = {}
+  UserData.setname = function(username){
+    window.localStorage['username'] = JSON.stringify(username);
+  }
+  UserData.getname = function(){
+    return angular.fromJson(window.localStorage['username']);
+  }
+  return UserData
 })
 
 app.service('AuthService', function($http, URLS){
@@ -67,11 +149,11 @@ app.service('ChatService', function($http, URLS){
 	Chat.getConversations = function(){
 		return $http.get(CLIST_URL);
 	};
-  Chat.getMessages = function(){
-		return $http.get(MLIST_URL);
+  Chat.getMessages = function(conversationUId){
+		return $http.get(MLIST_URL, {params: {conversation: conversationUId}});
   };
-  Chat.getMessage = function(uid){
-		return $http.get(MDETAIL_URL, uid);
+  Chat.getMessage = function(msgUid){
+		return $http.get(MDETAIL_URL, {params: {msg_id: msgUid}});
   };  
   Chat.addConversation = function(with_){
     return $http.post(CLIST_URL, with_)
