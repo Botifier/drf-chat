@@ -2,12 +2,21 @@ from rest_framework import serializers
 
 from .models import User, Message, Conversation
 
-
+#TODO: add tests on the returned fields
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ('uid', 'sender', 'created_at', 'text', 'conversation')
         # read_only_fields = ('created_at')
+        extra_kwargs = {'conversation': {'write_only': True}}
+
+
+class MessageListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ('uid', 'conversation')
+        # read_only_fields = ('created_at')
+        extra_kwargs = {'conversation': {'write_only': True}}
 
 
 class ConversationSerializer(serializers.ModelSerializer):    
@@ -27,7 +36,6 @@ class ConversationSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = User
 #         fields = ('username', 'password', 'email')
-#         write_only_fields = ('password')
 
 
 
