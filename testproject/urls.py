@@ -10,5 +10,5 @@ urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls')),
     url(r'^api-token-auth/', obtain_jwt_token, name='api-token-auth'),
     url(r'^api-token-verify/', verify_jwt_token, name='api-token-verify'),
-    # url(r'^$', index, name='index'),
+    url(r'^', include('webclient.urls')),
 ]
