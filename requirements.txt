@@ -1,6 +1,6 @@
 asgiref==1.1.2
 attrs==18.2.0
-autobahn==18.10.1
+autobahn==20.12.3
 Automat==0.7.0
 channels==1.1.8
 constantly==15.1.0
